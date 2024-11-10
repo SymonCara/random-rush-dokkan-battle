@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Lignes - Dokkan Battle</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-image: url('https://image.noelshack.com/fichiers/2017/52/4/1514416914-test.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .navbar {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 10px 0;
+            text-align: center;
+            font-size: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .add-container {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-left: 20px;
+        }
+
+        .player-count {
+            color: #fff;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+
+        .add-button {
+            background-color: #28a745;
+            color: #fff;
+            padding: 5px 8px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .add-button:hover {
+            background-color: #218838;
+        }
+
+        .remove-button {
+            background-color: #dc3545;
+            color: #fff;
+            padding: 5px 8px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .remove-button:hover {
+            background-color: #c82333;
+        }
+
+        .container-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            margin-top: 80px;
+            padding-left: 20px;
+        }
+
+        .container {
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            max-width: 250px;
+            width: 100%;
+            margin-right: 20px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: red; /* Joueur 1 en rouge */
+        }
+
+        label, p {
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        label {
+            color: #32CD32; /* "Nombre de lignes" en vert clair */
+        }
+
+        p {
+            color: #32CD32; /* "Lignes :" et "Perso" en vert clair */
+        }
+
+        .history-item {
+            padding: 8px;
+            background-color: #e0e0e0; /* Fond gris pour l'historique */
+            border-radius: 5px;
+            text-align: center;
+            margin: 5px;
+            white-space: nowrap;
+        }
+
+        .generate-button, .reset-btn {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .generate-button:disabled, .reset-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .reset-btn {
+            background-color: #dc3545;
+        }
+
+        .reset-btn:hover {
+            background-color: #c82333;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    Tirages Dokkan Battle
+    <div class="add-container">
+        <span>Nombre de joueur(s) : </span>
+        <span id="playerCount" class="player-count">1</span>
+        <button class="add-button" onclick="addNewContainer()">+</button>
+        <button class="remove-button" onclick="removeContainer()">-</button>
+    </div>
+</div>
+
+<!-- Conteneur de joueurs -->
+<div id="containerWrapper" class="container-wrapper">
+    <div id="container1" class="container">
+        <h1>Joueur 1</h1>
+        <label for="maxValue1">Nombre de lignes :</label>
+        <input type="number" id="maxValue1" min="1">
+        
+        <button id="generateButton1" class="generate-button" onclick="generateRandomNumbers(1)">Générer</button>
+        <button class="reset-btn" onclick="resetHistory(1)">Réinitialiser</button>
+        
+        <div class="result">
+            <p>Lignes : <span id="randomNumber1">---</span></p>
+            <p>Perso : <span id="randomDigit1">---</span></p>
+        </div>
+
+        <div class="history" id="historyList1"></div>
+    </div>
+</div>
+
+<script>
+    let playerCount = 1;
+    const historyLists = [];
+    const removeTextList = [];
+
+    function generateRandomNumbers(containerId) {
+        const maxValue = parseInt(document.getElementById('maxValue' + containerId).value);
+
+        if (isNaN(maxValue) || maxValue < 1) {
+            return;  // Ne rien faire si la valeur est incorrecte
+        }
+
+        // Vérifier si l'historique est déjà complet
+        if (historyLists[containerId - 1] && historyLists[containerId - 1].length >= 6) {
+            // Désactiver le bouton "Générer" si l'historique est complet
+            document.getElementById('generateButton' + containerId).disabled = true;
+            document.getElementById('generateButton' + containerId).style.backgroundColor = "#6c757d"; // Couleur désactivée
+            return;
+        }
+
+        const randomNumber = Math.floor(Math.random() * maxValue) + 1;
+        const randomDigit = Math.floor(Math.random() * 5) + 1;
+
+        // Mise à jour des valeurs générées pour ce joueur
+        document.getElementById('randomNumber' + containerId).textContent = randomNumber;
+        document.getElementById('randomDigit' + containerId).textContent = randomDigit;
+
+        // Ajouter à l'historique
+        addToHistory(containerId, randomNumber, randomDigit);
+
+        // Vérifier si randomNumber est égal à la valeur maximale
+        if (randomNumber === maxValue) {
+            resetHistory(containerId);  // Réinitialiser l'historique
+
+            // Afficher le texte "TOUT RETIRER" sous le bouton réinitialiser
+            const removeText = document.createElement('p');
+            removeText.textContent = 'TOUT RETIRER';
+            removeText.style.color = '#dc3545';  // Rouge
+            removeText.style.fontWeight = 'bold';
+            removeTextList[containerId - 1] = removeText;
+            const containerElement = document.getElementById('container' + containerId);
+            containerElement.appendChild(removeText);
+
+            // Désactiver le bouton "Générer" après avoir atteint la valeur maximale
+            document.getElementById('generateButton' + containerId).disabled = true;
+            document.getElementById('generateButton' + containerId).style.backgroundColor = "#6c757d"; // Couleur désactivée
+        }
+    }
+
+    function addToHistory(containerId, number, digit) {
+        // Vérifie si l'historique existe déjà pour ce joueur
+        if (!historyLists[containerId - 1]) {
+            historyLists[containerId - 1] = [];
+        }
+
+        // Ajouter l'élément à l'historique
+        historyLists[containerId - 1].push(`Lignes: ${number}, Perso: ${digit}`);
+
+        // Limiter l'historique à 6 éléments
+        if (historyLists[containerId - 1].length > 6) {
+            historyLists[containerId - 1].shift();  // Supprimer le premier élément si la limite est dépassée
+        }
+
+        displayHistory(containerId);
+    }
+
+    function displayHistory(containerId) {
+        const historyContainer = document.getElementById('historyList' + containerId);
+        historyContainer.innerHTML = '';  // Vider l'historique avant de l'afficher
+
+        // Ajouter chaque élément de l'historique à l'affichage
+        historyLists[containerId - 1].forEach(item => {
+            const historyItem = document.createElement('div');
+            historyItem.classList.add('history-item');
+            historyItem.textContent = item;
+            historyContainer.appendChild(historyItem);
+        });
+    }
+
+    function resetHistory(containerId) {
+        historyLists[containerId - 1] = [];  // Réinitialiser l'historique
+        displayHistory(containerId);
+
+        // Réinitialiser les valeurs générées
+        document.getElementById('randomNumber' + containerId).textContent = '---';
+        document.getElementById('randomDigit' + containerId).textContent = '---';
+
+        // Rendre le bouton "Générer" cliquable à nouveau
+        document.getElementById('generateButton' + containerId).disabled = false;
+        document.getElementById('generateButton' + containerId).style.backgroundColor = "#007BFF"; // Bleu
+
+        // Enlever le texte "TOUT RETIRER" s'il existe
+        if (removeTextList[containerId - 1]) {
+            removeTextList[containerId - 1].remove();
+            removeTextList[containerId - 1] = null;
+        }
+    }
+
+    function addNewContainer() {
+        playerCount++;
+        const containerId = playerCount;
+
+        const newContainer = document.createElement('div');
+        newContainer.id = 'container' + containerId;
+        newContainer.classList.add('container');
+        newContainer.innerHTML = `
+            <h1>Joueur ${containerId}</h1>
+            <label for="maxValue${containerId}">Nombre de lignes :</label>
+            <input type="number" id="maxValue${containerId}" min="1">
+            <button id="generateButton${containerId}" class="generate-button" onclick="generateRandomNumbers(${containerId})">Générer</button>
+            <button class="reset-btn" onclick="resetHistory(${containerId})">Réinitialiser</button>
+            <div class="result">
+                <p>Lignes : <span id="randomNumber${containerId}">---</span></p>
+                <p>Perso : <span id="randomDigit${containerId}">---</span></p>
+            </div>
+            <div class="history" id="historyList${containerId}"></div>
+        `;
+        document.getElementById('containerWrapper').appendChild(newContainer);
+        document.getElementById('playerCount').textContent = playerCount;
+    }
+
+    function removeContainer() {
+        if (playerCount > 1) {
+            const containerToRemove = document.getElementById('container' + playerCount);
+            containerToRemove.remove();
+            playerCount--;
+            document.getElementById('playerCount').textContent = playerCount;
+        }
+    }
+</script>
+
+</body>
+</html>
